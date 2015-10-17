@@ -19,35 +19,39 @@ class Chunk { # 64x64
     return $old;
   }
 }
-my $listen = IO::Socket::INET.new(:listen, :localport(3333));
+my $listen = IO::Socket::INET.new(:listen, :localport(4444));
+say "listening on port 4444";
 my %registry;
 loop {
-    my $conn = $listen.accept;
-    while my $req = $conn.get() {
-      say $req;
-      if $req ~~ /["GET " | "PUT "] (\S+) " HTTP/1.1"/ {
-        if $0 eq "/" {
-          serveFile($conn, "index.html", "text/html");
-        }
-        elsif $0 ~~ /"/getc/" (\d+) "/" (\d+)/ {
-          sendChunk($conn, $0, $1);
-        }
-        elsif $0 ~~ /"/update/" (\d+) "/" (\d+) "/" (\d+)/ {
-          update($conn, $0, $1, $2);
-        }
-        else {
-          serveFile($conn, "index.html", "text/plain");
-        }
-      }
+  say "await";
+  my $conn = $listen.accept;
+  say "accept";
+  my $req = $conn.get;
+  say $req;
+  if $req ~~ /["GET " | "PUT "] (\S+)s " HTTP/1.1"/ {
+    say $0;
+    if $0 eq "/" {
+      serveFile($conn, "index.html", "text/html");
     }
-    $conn.close;
+    elsif $0 ~~ /"/getc/" (\d+) "/" (\d+)/ {
+      sendChunk($conn, $0, $1);
+    }
+    elsif $0 ~~ /"/update/" (\d+) "/" (\d+) "/" (\d+)/ {
+      update($conn, $0, $1, $2);
+    }
+    else {
+      serveFile($conn, $0.substr(1), "text/plain");
+    }
+  }
+  say "close";
+  $conn.close;
 }
 
 sub getChunk(Int $r, Int $c) {
-  return %registry["$r,$c"];
+  return %registry{"$r,$c"};
 }
 sub setChunk(Int $r, Int $c, Chunk $chunk) {
-  %registry["$r,$c"] = $chunk;
+  %registry{"$r,$c"} = $chunk;
 }
 sub get(Int $x, Int $y) {
   my Int $r = $x +> 6;
@@ -119,18 +123,39 @@ sub update($conn, $x, $y, $new) {
 }
 
 sub serveFile($conn, $fname, $type) {
-  $conn.print(
-    qq:to/END/;
-    HTTP/1.1 200 OK
-    Date: {DateTime.now}
-    Connection: close
-    Server: code-game
-    Accept-Ranges: bytes
-    Content-Type: $type
-    Content-Length: 0
-    Last-Modified: {DateTime.now}
+  say "serving file...";
+  try {
+    my $content = slurp $fname;
+    $conn.print(
+      qq:to/END/;
+      HTTP/1.1 200 OK
+      Date: {DateTime.now}
+      Connection: close
+      Server: code-game
+      Accept-Ranges: bytes
+      Content-Type: $type
+      Content-Length: {$content.encode.elems}
+      Last-Modified: {DateTime.now}
 
-    {slurp $fname}
-    END
-  );
+      $content
+      END
+    );
+    CATCH {
+      $conn.print(
+        qq:to/END/;
+        HTTP/1.1 404 Not Found
+        Date: {DateTime.now}
+        Connection: close
+        Server: code-game
+        Accept-Ranges: bytes
+        Content-Type: text/html
+        Content-Length: 22
+        Last-Modified: {DateTime.now}
+
+        <h1>404 Not Found</h1>
+        END
+      );
+    }
+  }
+  say "file served!";
 }
