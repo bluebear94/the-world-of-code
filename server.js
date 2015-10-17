@@ -66,6 +66,7 @@ http.createServer(function (request, response) {
       var n = parts[3];
       set(x, y, n);
       response.end(getChunk(x >> 6, y >> 6).toString());
+      console.log(getChunk(x >> 6, y >> 6).toString());
     }
     else serve(response, url, ctypes[path.extname(url).substr(1)]);
   } catch (e) {

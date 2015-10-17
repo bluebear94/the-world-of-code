@@ -23,8 +23,16 @@ function getChunk(r, c) {
 function get(x, y) {
   var chunk = getChunk(x >> 6, y >> 6);
   if (chunk)
-    return chunk[(x << 6) | y];
+    return chunk[((x & 63) << 6) | (y & 63)];
   return " ";
+}
+function set(x, y, n) {
+  update(x, y, n, function() {
+    var chunk = getChunk(x >> 6, y >> 6);
+    var i = ((x & 63) << 6) | (y & 63);
+    registry[[x >> 6, y >> 6]] =
+      chunk.substr(0, i) + String.fromCharCode(n) + chunk.substr(i + 1);
+  })
 }
 
 var body;
@@ -75,12 +83,13 @@ function fetchChunksInRange(x, y) {
 function keyEvent(event) {
   var xx = x;
   var yy = y;
+  console.log(event);
   if (event.ctrlKey) {
     switch (event.keyIdentifier) {
       case "Down": q = Math.min(HEIGHT - 1, q + 1); break;
       case "Up": q = Math.max(0, q - 1); break;
-      case "Left": p = Math.max(0, p - 1); break;
-      case "Right": p = Math.min(WIDTH - 1, p + 1); break;
+      case "Left": p = Math.max(0, p - 1); pp = p; break;
+      case "Right": p = Math.min(WIDTH - 1, p + 1); pp = p; break;
     }
   } else {
     switch (event.keyIdentifier) {
@@ -88,6 +97,32 @@ function keyEvent(event) {
       case "Up": --y; break;
       case "Left": --x; break;
       case "Right": ++x; break;
+      case "Enter": {
+        ++q;
+        if (q >= HEIGHT) {
+          ++y;
+          --q;
+        }
+        p = pp;
+      }
+      default: {
+        try {
+          var c = gate(event.which, event.shiftKey);
+          set(x + p, y + q, c.charCodeAt(0));
+          ++p;
+          if (p >= WIDTH) {
+            p = pp;
+            ++q;
+            if (q >= HEIGHT) {
+              ++y;
+              --q;
+            }
+          }
+        }
+        catch (e) {
+          // do nothing
+        }
+      }
     }
   }
   if ((xx >> 6) != (x >> 6) ||
@@ -102,6 +137,7 @@ var x = 0;
 var y = 0;
 var p = 0;
 var q = 0;
+var pp = 0;
 
 function onLoad() {
   body = document.getElementById("main");
@@ -110,3 +146,17 @@ function onLoad() {
 }
 
 window.setInterval(function() {fetchChunksInRange(x, y); fill(x, y)}, 1000);
+
+var lut1 = "0123456789.......abcdefghijklmnopqrstuvwxyz";
+var lut2 = ")!@#$%^&*(.......ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+var lut3 = ";=,-./`";
+var lut4 = ":+<_>?~";
+var lut5 = "[\\]'";
+var lut6 = '{|}"';
+
+function gate(keyc, shift) {
+  if (keyc == 32) return " ";
+  if (keyc <= 90) return (shift ? lut2 : lut1)[keyc - 48];
+  if (keyc <= 192) return (shift ? lut4 : lut3)[keyc - 186];
+  return (shift ? lut6 : lut5)[keyc - 219];
+}
