@@ -26,13 +26,23 @@
       <li> <b>x y G</b> gets the character at (x, y). <b>x y n P</b> places a
         character (returning whether this succeeded). Note that only printable
         ASCII characters may be placed.
-      <li> <b>x y ^</b> gets the offset from the current location of
-        execution. <b>x y $</b> gets the offset from the starting location.
+      <li> <b>x y ^</b> gets the absolute coordinates from an offset of the
+        current location of execution. <b>x y $</b> uses the location wher
+        code starts instead.
       <li> <b>!</b> gives the logical negation of the topmost element
         (0 turns into 1; any other value turns into 0)
       <li> Any lowercase letter can be used as a variable. To assign the
         topmost stack element to one, use <b>#</b> followed by the name.
+      <li> <b>x y c K</b> calls a subroutine at (x, y). The <b>c</b> stack
+        entries that were there beforehand are available to the subroutine.
+      <li> <b>c R</b> returns from a subroutine to its caller. The <b>c</b>
+        stack entries that were there beforehand are available to the caller.
     </ul>
+    <p>
+      Everything you write is visible to people who visit this page.
+      Say <a href=https://gist.github.com/bluebear94/969950260a490fb36c8e>
+        hi</a> to your friends!
+    </p>
     <p> Source on <a href="https://github.com/bluebear94/the-world-of-code">Github</a>. </p>
   </td><td>
     <p> Try these examples! </p>
@@ -56,6 +66,7 @@
         Also want to unload old chunks in the client.
       <li> World persistence.
       <li> Using something <i>other</i> than tables for layout.
+      <li> Pasting in text.
     </ul>
   </td></tr></table>
 </body></html>

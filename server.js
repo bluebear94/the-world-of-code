@@ -95,6 +95,16 @@ function getHexValue(c) {
   return c - (c >= 65 ? 55 : 48);
 }
 
+function left(a, n) {
+  if (n == 0) return a;
+  return a.slice(0, -n);
+}
+
+function right(a, n) {
+  if (n == 0) return [];
+  return a.slice(-n);
+}
+
 // Using "suru" because "do" is already reserved.
 function suru(xmin, xmax, ymin, ymax) {
   console.log("start");
@@ -118,6 +128,7 @@ function suru(xmin, xmax, ymin, ymax) {
     while (x >= xmin && x < xmax && y >= ymin && y < ymax) {
       var curr = deref();
       var jumped = false;
+      console.log(curr);
       if (isHex(curr)) {
         advance();
         var next = deref();
@@ -170,17 +181,17 @@ function suru(xmin, xmax, ymin, ymax) {
       else if (curr == 62) {
         var b = stack.pop();
         var a = stack.pop();
-        stack.push(spear(a, b, function(x, y) {return x > y}));
+        stack.push(x > y);
       }
       else if (curr == 61) {
         var b = stack.pop();
         var a = stack.pop();
-        stack.push(spear(a, b, function(x, y) {return x == y}));
+        stack.push(x == y);
       }
       else if (curr == 89) {
         var a = stack.pop();
-        var t = stack.slice(-a);
-        stack = stack.slice(0, -a);
+        var t = right(stack, a);
+        stack = left(stack, a);
         var b = stack.pop();
         Array.prototype.push.apply(stack, t);
         stack.push(b);
@@ -188,8 +199,8 @@ function suru(xmin, xmax, ymin, ymax) {
       else if (curr == 87) {
         var a = stack.pop();
         var b = stack.pop();
-        var t = stack.slice(-a);
-        stack = stack.slice(0, -a);
+        var t = right(stack, a);
+        stack = left(stack, a);
         stack.push(b);
         Array.prototype.push.apply(stack, t);
       }
@@ -233,17 +244,42 @@ function suru(xmin, xmax, ymin, ymax) {
       else if (curr == 46) {
         var a = stack.pop();
       }
-      else if (curr >= 96 && curr < 123) {
-        stack.push(vars[curr - 96]);
+      else if (curr >= 97 && curr < 123) {
+        stack.push(vars[curr - 97]);
       }
       else if (curr == 35) {
         advance();
-        vars[next - 96] = stack.pop();
+        var next = deref();
+        vars[next - 97] = stack.pop();
       }
       else if (curr == 33) {
         stack.push(+!stack.pop());
       }
+      else if (curr == 75) {
+        var c = stack.pop();
+        var b = stack.pop();
+        var a = stack.pop();
+        var t = right(stack, c);
+        stack = left(stack, c);
+        stack.push(x);
+        stack.push(y);
+        Array.prototype.push.apply(stack, t);
+        x = a;
+        y = b;
+        jumped = true;
+      }
+      else if (curr == 82) {
+        var a = stack.pop();
+        var t = right(stack, a);
+        stack = left(stack, a);
+        var yy = stack.pop();
+        var xx = stack.pop();
+        x = xx;
+        y = yy;
+        Array.prototype.push.apply(stack, t);
+      }
       if (!jumped) advance();
+      console.log(stack);
       ++i;
       if (i >= 65536 || stack.length >= 256) throw 1;
     }
