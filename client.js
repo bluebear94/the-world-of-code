@@ -21,17 +21,15 @@ function getChunk(r, c) {
   return registry[[r, c]];
 }
 function get(x, y) {
-  var chunk = getChunk(x >> 6, y >> 6);
+  var chunk = getChunk(x >> 4, y >> 4);
   if (chunk)
-    return chunk[((x & 63) << 6) | (y & 63)];
+    return chunk[((x & 15) << 4) | (y & 15)];
   return " ";
 }
-function set(x, y, n) {
-  update(x, y, n, function() {
-    var chunk = getChunk(x >> 6, y >> 6);
-    var i = ((x & 63) << 6) | (y & 63);
-    registry[[x >> 6, y >> 6]] =
-      chunk.substr(0, i) + String.fromCharCode(n) + chunk.substr(i + 1);
+function set(cx, cy, n) {
+  update(cx, cy, n, function() {
+    fetchChunk(cx >> 4, cy >> 4);
+    fill(x, y);
   })
 }
 
@@ -46,7 +44,8 @@ function escapeChar(c) {
     case "<": return "&lt;";
     case ">": return "&gt;";
     case "&": return "&amp;";
-    case " ": return "&nbsp;";
+    case " ":
+    case undefined: return "&nbsp;";
     default: return c;
   }
 }
@@ -62,17 +61,17 @@ function fill(x, y) {
     }
     s += "<br>";
   }
-  s += "<hr>x = " + x + " / y = " + y;
+  s += "<hr>x = " + (x + p) + " / y = " + (y + q);
   body.innerHTML = s;
 }
 
 function fetchChunksInRange(x, y) {
   var xm = x + WIDTH;
   var ym = y + HEIGHT;
-  var r = x >> 6;
-  var c = y >> 6;
-  var rm = xm >> 6;
-  var cm = ym >> 6;
+  var r = x >> 4;
+  var c = y >> 4;
+  var rm = xm >> 4;
+  var cm = ym >> 4;
   for (var rr = r; rr <= rm; ++rr) {
     for (var cc = c; cc <= cm; ++cc) {
       fetchChunk(rr, cc);
@@ -83,13 +82,15 @@ function fetchChunksInRange(x, y) {
 function keyEvent(event) {
   var xx = x;
   var yy = y;
+  var setpp = true;
   console.log(event);
   if (event.ctrlKey) {
     switch (event.keyIdentifier) {
       case "Down": q = Math.min(HEIGHT - 1, q + 1); break;
       case "Up": q = Math.max(0, q - 1); break;
-      case "Left": p = Math.max(0, p - 1); pp = p; break;
-      case "Right": p = Math.min(WIDTH - 1, p + 1); pp = p; break;
+      case "Left": p = Math.max(0, p - 1); break;
+      case "Right": p = Math.min(WIDTH - 1, p + 1); break;
+      default: setpp = false;
     }
   } else {
     switch (event.keyIdentifier) {
@@ -106,6 +107,7 @@ function keyEvent(event) {
         p = pp;
       }
       default: {
+        setpp = false;
         try {
           var c = gate(event.which, event.shiftKey);
           set(x + p, y + q, c.charCodeAt(0));
@@ -124,20 +126,21 @@ function keyEvent(event) {
         }
       }
     }
+    if (setpp) pp = p;
   }
-  if ((xx >> 6) != (x >> 6) ||
-      (yy >> 6) != (y >> 6) ||
-      ((xx + WIDTH) >> 6) != ((x + WIDTH) >> 6) ||
-      ((yy + WIDTH) >> 6) != ((y + WIDTH) >> 6))
+  if ((xx >> 4) != (x >> 4) ||
+      (yy >> 4) != (y >> 4) ||
+      ((xx + WIDTH) >> 4) != ((x + WIDTH) >> 4) ||
+      ((yy + WIDTH) >> 4) != ((y + WIDTH) >> 4))
     fetchChunksInRange(x, y);
   fill(x, y);
 }
 
-var x = 0;
-var y = 0;
-var p = 0;
-var q = 0;
-var pp = 0;
+var x = -WIDTH / 2;
+var y = -HEIGHT / 2;
+var p = WIDTH / 2;
+var q = HEIGHT / 2;
+var pp = p;
 
 function onLoad() {
   body = document.getElementById("main");
