@@ -134,6 +134,7 @@ function keyEvent(event) {
       ((yy + WIDTH) >> 4) != ((y + WIDTH) >> 4))
     fetchChunksInRange(x, y);
   fill(x, y);
+  event.preventDefault();
 }
 
 var x = -WIDTH / 2;

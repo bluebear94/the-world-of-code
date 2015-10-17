@@ -112,7 +112,6 @@ function suru(xmin, xmax, ymin, ymax) {
   }
   function deref() {
     var r = get(x, y);
-    console.log(r);
     return r;
   }
   try {
@@ -247,7 +246,6 @@ function suru(xmin, xmax, ymin, ymax) {
       if (!jumped) advance();
       ++i;
       if (i >= 65536 || stack.length >= 256) throw 1;
-      console.log(stack);
     }
   }
   catch (e) {
