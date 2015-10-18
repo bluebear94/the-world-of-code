@@ -99,6 +99,8 @@ function submitCode() {
 }
 
 function keyEvent(event) {
+  if (document.activeElement && document.activeElement.id == "code")
+    return;
   var xx = x;
   var yy = y;
   var setpp = true;
@@ -155,7 +157,7 @@ function keyEvent(event) {
       ((yy + WIDTH) >> 4) != ((y + WIDTH) >> 4))
     fetchChunksInRange(x, y);
   fill(x, y);
-  if (pd && document.getActiveElement.id != "code") event.preventDefault();
+  if (pd) event.preventDefault();
 }
 
 var x = -WIDTH / 2;
