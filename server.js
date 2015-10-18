@@ -1,6 +1,7 @@
 var http = require('http');
 var fs = require('fs');
 var path = require('path');
+var readline = require('readline');
 
 var ctypes = {
   html: "text/html",
@@ -55,9 +56,12 @@ function serve(response, fname, type) {
   });
 }
 
-for (var i = 0; i < 32; ++i)
-  set(i, i >> 1, 64 + i);
-http.createServer(function (request, response) {
+try {
+  readImage();
+} catch (e) {
+  // do nothing
+}
+var server = http.createServer(function (request, response) {
   try {
     var url = request.url.substr(1);
     if (url === '') serve(response, "index.html", "text/html");
@@ -104,9 +108,26 @@ http.createServer(function (request, response) {
     response.writeHead(400);
     response.end("Malformed request. Please make sure to provide enough arguments.");
   }
-}).listen(8124);
+});
+
+server.listen(8124);
 
 console.log('Server running at http://127.0.0.1:8124/');
+
+var rl = readline.createInterface(process.stdin, process.stdout);
+rl.setPrompt("> ");
+rl.prompt();
+rl.on("line", function (line) {
+  line = line.trim();
+  lines = line.split(" ");
+  switch (lines[0]) {
+    case "quit":
+    case "stop":
+    writeImage();
+    server.close();
+    process.exit(0);
+  }
+});
 
 function isHex(c) {
   return c >= 48 && c < 58 || c >= 65 && c < 71;
@@ -128,7 +149,7 @@ function right(a, n) {
 
 // Using "suru" because "do" is already reserved.
 function suru(xmin, xmax, ymin, ymax) {
-  console.log("start");
+  //sconsole.log("start");
   var x = xmin;
   var y = ymin;
   var stack = [];
@@ -143,13 +164,13 @@ function suru(xmin, xmax, ymin, ymax) {
   }
   function deref() {
     var r = get(x, y);
-    return r;
+    return r;ss
   }
   try {
     while (x >= xmin && x < xmax && y >= ymin && y < ymax) {
       var curr = deref();
       var jumped = false;
-      console.log(curr);
+      //console.log(curr);
       if (isHex(curr)) {
         advance();
         var next = deref();
@@ -294,13 +315,13 @@ function suru(xmin, xmax, ymin, ymax) {
         var t = right(stack, a);
         stack = left(stack, a);
         var yy = stack.pop();
-        var xx = stack.pop();
+        var xx = stack.spop();
         x = xx;
         y = yy;
         Array.prototype.push.apply(stack, t);
       }
       if (!jumped) advance();
-      console.log(stack);
+      //console.log(stack);
       ++i;
       if (i >= 65536 || stack.length >= 256) throw 1;
     }
@@ -310,4 +331,32 @@ function suru(xmin, xmax, ymin, ymax) {
     return false;
   }
   return true;
+}
+
+function writeImage() {
+  console.log("Saving to file...");
+  var fd = fs.openSync("image.bin", "w");
+  for (var pos in registry) {
+    var buff = new Buffer(8);
+    buff.writeInt32LE(pos[0], 0);
+    buff.writeInt32LE(pos[1], 4);
+    fs.writeSync(fd, buff, 0, 8);
+    fs.writeSync(fd, registry[pos], 0, 256);
+  }
+  fs.closeSync(fd);
+}
+
+function readImage() {
+  var fd = fs.openSync("image.bin", "r");
+  while (true) {
+    var header = new Buffer(8);
+    var body = new Buffer(256);
+    var nbr = fs.readSync(fd, header, 0, 8, null);
+    if (nbr < 8) break;
+    nbr = fs.readSync(fd, body, 0, 256, null);
+    if (nbr < 256) break;
+    registry[[header.readInt32LE(0), header.readInt32LE(1)]] = body;
+  }
+  fs.closeSync(fd);
+  console.log("Read the save.")
 }
