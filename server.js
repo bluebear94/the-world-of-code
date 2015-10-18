@@ -44,6 +44,7 @@ function paste(x, y, b) {
   }
 }
 var registry = {};
+var tron = false;
 
 function serve(response, fname, type) {
   fs.readFile(fname, function (err, data) {
@@ -123,9 +124,16 @@ rl.on("line", function (line) {
   switch (lines[0]) {
     case "quit":
     case "stop":
-    writeImage();
-    server.close();
-    process.exit(0);
+      writeImage();
+      server.close();
+      process.exit(0);
+    break;
+    case "tron":
+      tron = true;
+      break;
+    case "troff":
+      tron = false;
+      break;
   }
 });
 
@@ -164,13 +172,13 @@ function suru(xmin, xmax, ymin, ymax) {
   }
   function deref() {
     var r = get(x, y);
-    return r;ss
+    return r;
   }
   try {
     while (x >= xmin && x < xmax && y >= ymin && y < ymax) {
       var curr = deref();
       var jumped = false;
-      //console.log(curr);
+      if (tron) console.log(curr);
       if (isHex(curr)) {
         advance();
         var next = deref();
@@ -315,13 +323,13 @@ function suru(xmin, xmax, ymin, ymax) {
         var t = right(stack, a);
         stack = left(stack, a);
         var yy = stack.pop();
-        var xx = stack.spop();
+        var xx = stack.pop();
         x = xx;
         y = yy;
         Array.prototype.push.apply(stack, t);
       }
       if (!jumped) advance();
-      //console.log(stack);
+      if (tron) console.log(stack);
       ++i;
       if (i >= 65536 || stack.length >= 256) throw 1;
     }
