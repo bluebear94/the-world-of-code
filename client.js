@@ -79,10 +79,30 @@ function fetchChunksInRange(x, y) {
   }
 }
 
+function paste(cx, cy, s) {
+  var req = new XMLHttpRequest();
+  req.addEventListener("load", function() {
+    fetchChunksInRange(x, y);
+  });
+  req.open("POST", "/paste/" + cx + "/" + cy);
+  req.setRequestHeader("Content-type", "text/plain");
+  req.setRequestHeader("Content-length", s.length);
+  req.setRequestHeader("Connection", "close");
+  req.send(s);
+}
+
+function submitCode() {
+  tc = document.getElementById("code");
+  s = tc.value;
+  paste(x + p, y + q, s);
+  tc.value = "";
+}
+
 function keyEvent(event) {
   var xx = x;
   var yy = y;
   var setpp = true;
+  var pd = true;
   console.log(event);
   if (event.ctrlKey) {
     switch (event.keyIdentifier) {
@@ -90,6 +110,7 @@ function keyEvent(event) {
       case "Up": q = Math.max(0, q - 1); break;
       case "Left": p = Math.max(0, p - 1); break;
       case "Right": p = Math.min(WIDTH - 1, p + 1); break;
+      case "U+0043": pd = false; break;
       default: setpp = false;
     }
   } else {
@@ -134,7 +155,7 @@ function keyEvent(event) {
       ((yy + WIDTH) >> 4) != ((y + WIDTH) >> 4))
     fetchChunksInRange(x, y);
   fill(x, y);
-  event.preventDefault();
+  if (pd && document.getActiveElement.id != "code") event.preventDefault();
 }
 
 var x = -WIDTH / 2;

@@ -1,6 +1,15 @@
 <html><head><title>the World of Code</title></head><link rel="stylesheet" type="text/css" href="theme.css" /><body onkeydown="keyEvent(event)" onload="onLoad()">
   <script src="client.js" type="text/javascript"> </script>
-  <div id="main">Loading (please enable Javascript)...</div>
+  <table><tr><td>
+    <div id="main">Loading (please enable Javascript)...</div>
+  </td><td>
+    <form>
+      Code pasting: <br>
+      <textarea name="mycode" id="code" rows="20" cols="40">
+      </textarea>
+      <button type="button" onclick="submitCode()">Paste!</button>
+    </form>
+  </td><tr></table>
   <table><tr><td>
     <p>
       Use the arrow keys to pan the map. Hold Ctrl to instead move the yellow

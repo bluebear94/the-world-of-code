@@ -28,6 +28,20 @@ function set(x, y, n) {
     registry[[+(x >> 4), +(y >> 4)]] = buff;
   }
 }
+function paste(x, y, b) {
+  var p = x;
+  var q = y;
+  for (var i = 0; i < b.length; ++i) {
+    var c = b[i];
+    if (c == 10) {
+      ++q;
+      p = x;
+    }
+    else if (c >= 32 && c < 127) {
+      set(p++, q, c);
+    }
+  }
+}
 var registry = {};
 
 function serve(response, fname, type) {
@@ -43,8 +57,6 @@ function serve(response, fname, type) {
 
 for (var i = 0; i < 32; ++i)
   set(i, i >> 1, 64 + i);
-for (var i = 0; i < 32; ++i)
-  console.log(get(i, i >> 1));
 http.createServer(function (request, response) {
   try {
     var url = request.url.substr(1);
@@ -76,6 +88,15 @@ http.createServer(function (request, response) {
         }
       }
       response.end(getChunk(x >> 4, y >> 4).toString());
+    }
+    else if (url.startsWith("paste")) {
+      var parts = url.split('/');
+      var x = +parts[1];
+      var y = +parts[2];
+      request.on('data', function (chunk) {
+        paste(x, y, chunk);
+      });
+      response.end("");
     }
     else serve(response, url, ctypes[path.extname(url).substr(1)]);
   } catch (e) {
